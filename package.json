@@ -1,0 +1,17 @@
+{
+  "name": "licensechecks",
+  "version": "1.0.0",
+  "description": "Check license violations in WSE",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Krishna Kaipa",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "mongodb": "^5.4.0",
+    "octokit": "^2.0.14"
+  }
+}
