@@ -3,7 +3,7 @@ import { spawn } from 'child_process';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import { config } from "dotenv";
 // Function to execute a command and write its result to the output file
-
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 async function addFailedJob(link) 
 {
 	const client = await MongoClient.connect(uri);
@@ -18,8 +18,9 @@ const executeCheckCommandReturnsLicenses = (link) => {
 
   return new Promise((resolve, reject) => {
     // const cmd  = `python3 test.py`
-    const cmd = `./controller/build/searchseco check ${link}`;
-    const process = spawn(cmd, { shell: true });
+    const process = spawn('docker',  ["run", "--rm", "--name", `controller-container-${link.substring(link.lastIndexOf('/')+1)}`,
+    '--entrypoint=./controller/build/searchseco', '-e', `github_token=${GITHUB_TOKEN}`, '--cpus=2',
+    '-e', `worker_name=portal-check-${link.substring(link.lastIndexOf('/')+1)}`, 'searchseco/controller:master', 'check', url]);
     let output = '';
     let timeout;
     let matchedProjects = [];
