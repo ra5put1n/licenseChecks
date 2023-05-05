@@ -17,9 +17,8 @@ async function addFailedJob(link)
 const executeCheckCommandReturnsLicenses = (link) => {
 
   return new Promise((resolve, reject) => {
-    //CHANGE THIS
-    const cmd  = `python3 test.py`
-    //const cmd = `./controller/build/searchseco check ${link}`;
+    // const cmd  = `python3 test.py`
+    const cmd = `./controller/build/searchseco check ${link}`;
     const process = spawn(cmd, { shell: true });
     let output = '';
     let timeout;
