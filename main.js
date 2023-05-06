@@ -108,6 +108,6 @@ async function runForever()
 
 
 // For cleanup and testing
-await writeCurrentJobs([]);
+// await writeCurrentJobs([]);
 
-// runForever();
+runForever();
