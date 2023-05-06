@@ -20,7 +20,7 @@ const executeCheckCommandReturnsLicenses = (link) => {
     // const cmd  = `python3 test.py`
     const process = spawn('docker',  ["run", "--rm", "--name", `controller-container-${link.substring(link.lastIndexOf('/')+1)}`,
     '--entrypoint=./controller/build/searchseco', '-e', `github_token=${GITHUB_TOKEN}`, '--cpus=2',
-    '-e', `worker_name=portal-check-${link.substring(link.lastIndexOf('/')+1)}`, 'searchseco/controller:master', 'check', url]);
+    '-e', `worker_name=portal-check-${link.substring(link.lastIndexOf('/')+1)}`, 'searchseco/controller:master', 'check', link]);
     let output = '';
     let timeout;
     let matchedProjects = [];
