@@ -54,17 +54,7 @@ async function addCompletedJob(link)
 	client.close();
 }
 
-async function writeResultAndCleanup() 
-{
-    const client = await MongoClient.connect(uri);
-    const db = client.db('jobs');
-    const settingsCollection = db.collection('currentJobs');
-    await settingsCollection.updateOne({ key: 'urls' }, { $set: { value: [] } });
-    console.log(`Removed current jobs\n`);
-    client.close();
-}
-
-async function writeToDb(job, result) 
+async function writeToDb(job,result,jobs) 
 {
     const client = await MongoClient.connect(uri);
     const db = client.db('jobs');
@@ -72,6 +62,9 @@ async function writeToDb(job, result)
     // console.log(result);
     await collection.insertOne({ link: result.link, licenseConflicts: Number(result.numberOfLicenseConflicts), CVEs: result.CVEs, matchedProjects: result.matchedProjects});
     console.log(`Result written to DB for ${job}: ${result}\n`);
+    jobs.splice(jobs.indexOf(job),1);
+    // console.log(tempJobs);
+    await writeCurrentJobs(jobs);
     client.close();
 }
 
@@ -88,7 +81,7 @@ async function processJobs()
         let result = await executeCheckCommandReturnsLicenses(job);
         console.log(`Number of conflicts for ${job}: ${result.numberOfLicenseConflicts}\n`);
         console.log(`Number of matches for ${job}: ${result.matchedProjects.length}\n`);
-        await writeToDb(job, result);
+        await writeToDb(job, result,currentJobs);
         await addCompletedJob(job);
       } 
       catch (error) 
@@ -97,7 +90,6 @@ async function processJobs()
         await addFailedJob(job);
       }
     }
-    await writeResultAndCleanup();
 }
 
 async function runForever() 
@@ -116,6 +108,6 @@ async function runForever()
 
 
 // For cleanup and testing
-// await writeCurrentJobs([]);
+await writeCurrentJobs([]);
 
-runForever();
+// runForever();
