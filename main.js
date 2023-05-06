@@ -52,7 +52,7 @@ async function writeResultAndCleanup(completedJobs)
     await settingsCollection.updateOne({ key: 'urls' }, { $set: { value: [] } });
     console.log(`Removed current jobs\n`);
     const settingsCollection2 = db.collection('completedJobs');
-    for(const completedJob of completedJobs)
+    for(let completedJob of completedJobs)
     {
         await settingsCollection2.insertOne({ link: completedJob }, { upsert: true });
     }
@@ -82,7 +82,7 @@ async function processJobs()
       try 
       {
         console.log(`Processing job ${job}.`)
-        const result = await executeCheckCommandReturnsLicenses(job);
+        let result = await executeCheckCommandReturnsLicenses(job);
         console.log(`Result for ${job}: ${result}\n`);
         await writeToDb(job, result);
         completedJobs.push(job);

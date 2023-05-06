@@ -2,6 +2,7 @@ import fs from 'fs';
 import { spawn } from 'child_process';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import { config } from "dotenv";
+config();
 // Function to execute a command and write its result to the output file
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 async function addFailedJob(link) 
@@ -14,13 +15,13 @@ async function addFailedJob(link)
 	client.close();
 }
 
-const executeCheckCommandReturnsLicenses = (link) => {
+async function executeCheckCommandReturnsLicenses (link) {
 
-  return new Promise((resolve, reject) => {
     // const cmd  = `python3 test.py`
-    const process = spawn('docker',  ["run", "--rm", "--name", `controller-container-${link.substring(link.lastIndexOf('/')+1)}`,
+    return new Promise(async (resolve, reject) => {
+    const process = spawn('docker',  ["run", "--rm", "--name", `controller-container-license`,
     '--entrypoint=./controller/build/searchseco', '-e', `github_token=${GITHUB_TOKEN}`, '--cpus=2',
-    '-e', `worker_name=portal-check-${link.substring(link.lastIndexOf('/')+1)}`, 'searchseco/controller:master', 'check', link]);
+    '-e', `worker_name=license-checker`, 'searchseco/controller:master', 'check', link]);
     let output = '';
     let timeout;
     let matchedProjects = [];
@@ -47,11 +48,25 @@ const executeCheckCommandReturnsLicenses = (link) => {
         }
         timeout = setTimeout(handleTimeout, 20 * numFiles * 1000); // 20 seconds per file
       }
-      else {
-        console.log(`Error in number of files`);
-      }
     });
     
+    process.stderr.on("data", (data) => {
+      output += data;
+      // console.log(data.toString());
+      // Check if the output contains the number of files being parsed
+      const regex = /Parsing (\d+) files/;
+      const match = data.toString().match(regex);
+      if (match) {
+        // Set the timeout based on the number of files being parsed
+        const numFiles = parseInt(match[1]);
+        if (timeout) {
+          clearTimeout(timeout);
+        }
+        console.log(`Timeout for ${link} set to ${20 * numFiles * 1000}`);
+        timeout = setTimeout(handleTimeout, 20 * numFiles * 1000); // 20 seconds per file
+      }
+    });
+
     process.on("close", (code) => {
       
       if (timeout) {
