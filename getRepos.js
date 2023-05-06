@@ -36,38 +36,37 @@ async function updateCurrentPage(newPage)
 	client.close();
 }
 
-async function getTopStarredRepos() 
+async function getRepos() 
 {
-	const query = "stars:>100 license:agpl-3.0 license:gpl-3.0 license:gpl-2. license:mpl-2.0 license:lgpl-3.0 license:lgpl-2.1";
+	const orgs = ["google","facebook","microsoft"];
 	const sort = "stars";
 	const order = "desc";
-	const perPage = 100;
+	const perPage = 5;
 	let page = await getCurrentPage();
-
-	let resultCount = 0;
 	let repos = [];
 
-	// Fetch up to maxPages pages of results
-	const response = await octokit.rest.search.repos({
-	q: query,
-	sort: sort,
-	order: order,
-	per_page: perPage,
-	page: page,
-	});
-
-	// Append the new repos to the existing list
-	repos = repos.concat(response.data.items);
-
+	for(const org of orgs)
+	{
+		// Fetch up to maxPages pages of results
+		const response = await octokit.request(`GET /orgs/${org}/repos`, {
+			page: page,
+			per_page: perPage
+		});
+		for(let i = 0; i < response.data.length; i++)
+		{
+			repos.push(response.data[i]);
+		}
+	}
 	// Update the result count and page counter
-	resultCount += response.data.items.length;
 	page += 1;
 	await updateCurrentPage(page);
 
-	// Return the links of the top 100 starred repositories
-	return repos.slice(0, 100).map((repo) => repo.html_url);
+	// Return the links of the top 10 starred repositories
+	return repos.slice(0, 15).map((repo) => repo.html_url);
 }
 // For cleanup and testing
 // await updateCurrentPage(1);
+// let res = await getRepos();
+// console.log(res);
 
-export default getTopStarredRepos;
+export default getRepos;

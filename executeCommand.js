@@ -17,11 +17,11 @@ async function addFailedJob(link)
 
 async function executeCheckCommandReturnsLicenses (link) {
 
-    // const cmd  = `python3 test.py`
     return new Promise(async (resolve, reject) => {
-    const process = spawn('docker',  ["run", "--rm", "--name", `controller-container-license`,
+    const process = spawn('docker',  ["run", "--rm", "--name", `controller-container-${link.substring(link.lastIndexOf('/')+1)}`,
     '--entrypoint=./controller/build/searchseco', '-e', `github_token=${GITHUB_TOKEN}`, '--cpus=2',
-    '-e', `worker_name=license-checker`, 'searchseco/controller:master', 'check', link]);
+    '-e', `worker_name=license-checker-${link.substring(link.lastIndexOf('/')+1)}`, 'searchseco/controller:master', 'check', link]);
+    // const process = spawn('python3',  ["test.py"])
     let output = '';
     let timeout;
     let matchedProjects = [];
@@ -87,26 +87,26 @@ async function executeCheckCommandReturnsLicenses (link) {
         if (numberOfLicenseConflicts === undefined) {
           numberOfLicenseConflicts = 0;
         }
-
-        // Check if the output contains a project listing
-        const projectRegex = /^(\S+)\s+(\d+)\s+\((https?:\/\/\S+)\)$/gm;
+        const projectRegex = /(\w+\s*[-]*\w*)\s*(\d+)\s*\((http\S+)\)/gm;
         let projectMatch;
         while ((projectMatch = projectRegex.exec(output))) {
-          const name = projectMatch[1];
+          // console.log(projectMatch);
+          const name = projectMatch[1].trim();
           const count = parseInt(projectMatch[2]);
           const url = projectMatch[3];
           matchedProjects.push({ name, count, url });
         }
-        
+
         const cveRegex = /CVE-\d{4}-\d{4,7}/g;
-        let cveMatch;
-        while ((cveMatch = cveRegex.exec(output))) {
-          const cve = cveMatch[0];
-          // push into CVEs array only of it is not already present
-          if (!CVEs.includes(cve)) {
-            CVEs.push(cve);
+          let cveMatch;
+          while ((cveMatch = cveRegex.exec(output))) {
+            const cve = cveMatch[0];
+            // push into CVEs array only of it is not already present
+            if (!CVEs.includes(cve)) {
+              CVEs.push(cve);
+            }
           }
-        }
+        
       } 
       else 
       {
@@ -125,5 +125,7 @@ async function executeCheckCommandReturnsLicenses (link) {
   });
 }
 
-// export { executeCheckCommandReturnsLicenses };
+// let res = await executeCheckCommandReturnsLicenses("https://github.com/ra5put1n/vulnerable-openssl");
+// console.log(res);
+
 export default executeCheckCommandReturnsLicenses;

@@ -4,7 +4,7 @@ config();
 
 const uri  = process.env.MONGODB_URI;
 import executeCheckCommandReturnsLicenses from './executeCommand.js';
-import getTopStarredRepos from './getRepos.js';
+import getRepos from './getRepos.js';
 
 async function writeCurrentJobs(jobs)
 {
@@ -26,7 +26,7 @@ async function getCurrentJobs()
         let currentJobs = settings.value;
         if (currentJobs.length == 0)
         {
-            currentJobs = await getTopStarredRepos();
+            currentJobs = await getRepos();
         }
         await writeCurrentJobs(currentJobs);
         client.close();
@@ -44,19 +44,23 @@ async function addFailedJob(link)
 	client.close();
 }
 
-async function writeResultAndCleanup(completedJobs) 
+async function addCompletedJob(link) 
+{
+	const client = await MongoClient.connect(uri);
+	const db = client.db('jobs');
+	const settingsCollection = db.collection('completedJobs');
+	await settingsCollection.insertOne({ link: link }, { upsert: true });
+	console.log("Added project to completedJobs\n")
+	client.close();
+}
+
+async function writeResultAndCleanup() 
 {
     const client = await MongoClient.connect(uri);
     const db = client.db('jobs');
     const settingsCollection = db.collection('currentJobs');
     await settingsCollection.updateOne({ key: 'urls' }, { $set: { value: [] } });
     console.log(`Removed current jobs\n`);
-    const settingsCollection2 = db.collection('completedJobs');
-    for(let completedJob of completedJobs)
-    {
-        await settingsCollection2.insertOne({ link: completedJob }, { upsert: true });
-    }
-    console.log(`Added ${completedJobs.length} jobs to completedJobs\n`);
     client.close();
 }
 
@@ -65,16 +69,15 @@ async function writeToDb(job, result)
     const client = await MongoClient.connect(uri);
     const db = client.db('jobs');
     const collection = db.collection('results');
-    await collection.insertOne({ link: job, licenseConflicts: result.licenseConflicts, CVEs: result.CVEs, matchedProjects: result.matchedProjects});
+    // console.log(result);
+    await collection.insertOne({ link: result.link, licenseConflicts: Number(result.numberOfLicenseConflicts), CVEs: result.CVEs, matchedProjects: result.matchedProjects});
     console.log(`Result written to DB for ${job}: ${result}\n`);
     client.close();
 }
 
-  
 async function processJobs() 
 {
     const currentJobs = await getCurrentJobs();
-    let completedJobs = [];
     console.log(`Processing ${currentJobs.length} jobs.\n`);
   
     for (const job of currentJobs) 
@@ -83,9 +86,10 @@ async function processJobs()
       {
         console.log(`Processing job ${job}.`)
         let result = await executeCheckCommandReturnsLicenses(job);
-        console.log(`Result for ${job}: ${result}\n`);
+        console.log(`Number of conflicts for ${job}: ${result.numberOfLicenseConflicts}\n`);
+        console.log(`Number of matches for ${job}: ${result.matchedProjects.length}\n`);
         await writeToDb(job, result);
-        completedJobs.push(job);
+        await addCompletedJob(job);
       } 
       catch (error) 
       {
@@ -93,7 +97,7 @@ async function processJobs()
         await addFailedJob(job);
       }
     }
-    await writeResultAndCleanup(completedJobs);
+    await writeResultAndCleanup();
 }
 
 async function runForever() 
