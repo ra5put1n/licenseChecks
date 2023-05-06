@@ -34,13 +34,16 @@ async function getCurrentJobs()
     });
 }
 
-async function addFailedJob(link) 
+async function addFailedJob(link,jobs) 
 {
 	const client = await MongoClient.connect(uri);
 	const db = client.db('jobs');
 	const settingsCollection = db.collection('failedJobs');
 	await settingsCollection.insertOne({ link: link }, { upsert: true });
 	// console.log("Added project to failedJobs\n")
+  jobs.splice(jobs.indexOf(link),1);
+  // console.log(tempJobs);
+  await writeCurrentJobs(jobs);
 	client.close();
 }
 
@@ -87,7 +90,7 @@ async function processJobs()
       catch (error) 
       {
         console.error(`Error processing job ${job}: ${error}\n`);
-        await addFailedJob(job);
+        await addFailedJob(job,currentJobs);
       }
     }
 }
