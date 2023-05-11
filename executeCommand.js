@@ -74,7 +74,7 @@ async function executeCheckCommandReturnsLicenses (link) {
         clearTimeout(timeout);
       }
 
-      let numberOfLicenseConflicts;
+      let numberOfLicenseConflicts,report_result;
       if (code === 0) {
         // Extract the number of license conflicts from the output
         const lines = output.split("\n");
@@ -107,7 +107,9 @@ async function executeCheckCommandReturnsLicenses (link) {
               CVEs.push(cve);
             }
           }
-        
+
+          const report_index = output.indexOf("------------------------------------------------------------------------------------------");
+          report_result = report_index !== -1 ? output.slice(report_index + 1) : '';
       } 
       else 
       {
@@ -119,6 +121,7 @@ async function executeCheckCommandReturnsLicenses (link) {
         numberOfLicenseConflicts,
         matchedProjects,
         CVEs,
+        report_result
       };
 
       resolve(result);

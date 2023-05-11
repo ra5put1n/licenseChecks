@@ -69,7 +69,7 @@ async function writeToDb(job,result,jobs)
     {
         license = "Unknown";
     }
-    await collection.insertOne({ link: result.link, licenseConflicts: Number(result.numberOfLicenseConflicts), CVEs: result.CVEs, matchedProjects: result.matchedProjects, license: license});
+    await collection.insertOne({ link: result.link, licenseConflicts: Number(result.numberOfLicenseConflicts), CVEs: result.CVEs, matchedProjects: result.matchedProjects, license: license, report: result.report_result});
     console.log(`Result written to DB for ${job}: ${result}\n`);
     jobs.splice(jobs.indexOf(job),1);
     // console.log(tempJobs);
