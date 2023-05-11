@@ -4,7 +4,8 @@ config();
 
 const uri  = process.env.MONGODB_URI;
 import executeCheckCommandReturnsLicenses from './executeCommand.js';
-import getRepos from './getRepos.js';
+import {getRepos,getRepoLicense} from './getRepos.js';
+
 
 async function writeCurrentJobs(jobs)
 {
@@ -63,7 +64,12 @@ async function writeToDb(job,result,jobs)
     const db = client.db('jobs');
     const collection = db.collection('results');
     // console.log(result);
-    await collection.insertOne({ link: result.link, licenseConflicts: Number(result.numberOfLicenseConflicts), CVEs: result.CVEs, matchedProjects: result.matchedProjects});
+    const license = await getRepoLicense(job);
+    if (license == null)
+    {
+        license = "Unknown";
+    }
+    await collection.insertOne({ link: result.link, licenseConflicts: Number(result.numberOfLicenseConflicts), CVEs: result.CVEs, matchedProjects: result.matchedProjects, license: license});
     console.log(`Result written to DB for ${job}: ${result}\n`);
     jobs.splice(jobs.indexOf(job),1);
     // console.log(tempJobs);

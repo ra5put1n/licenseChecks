@@ -36,7 +36,18 @@ async function updateCurrentPage(newPage)
 	client.close();
 }
 
-async function getRepos() 
+export async function getRepoLicense(link)
+{
+	const org_repo = link.split("/").slice(-2).join("/");
+	const response = await octokit.request(`GET /repos/${org_repo}`);
+	if (response.data.license == null)
+	{
+		return null;
+	}
+	return response.data.license.name;
+}
+
+export async function getRepos() 
 {
 	const orgs = ["google","facebook","microsoft"];
 	const sort = "stars";
@@ -69,4 +80,5 @@ async function getRepos()
 // let res = await getRepos();
 // console.log(res);
 
-export default getRepos;
+// let res = await getRepoLicense("https://github.com/google/googletest");
+// console.log(res);

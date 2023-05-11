@@ -30,7 +30,7 @@ async function executeCheckCommandReturnsLicenses (link) {
     const handleTimeout = async () => {
       process.kill();
       console.log(`Timeout exceeded for link: ${link}`);
-      await addFailedJob(link);
+      // await addFailedJob(link);
       //Add this to failed jobs queue 
     };
 
