@@ -29,7 +29,7 @@ async function executeCheckCommandReturnsLicenses (link) {
 
     const handleTimeout = async () => {
       process.kill();
-      console.log(`Timeout for link: ${link}`);
+      console.log(`Timeout exceeded for link: ${link}`);
       await addFailedJob(link);
       //Add this to failed jobs queue 
     };
@@ -46,7 +46,8 @@ async function executeCheckCommandReturnsLicenses (link) {
         if (timeout) {
           clearTimeout(timeout);
         }
-        timeout = setTimeout(handleTimeout, 20 * numFiles * 1000); // 20 seconds per file
+        console.log(`Timeout for ${link} set to ${Math.min(20 * numFiles * 1000, 2 * 60 * 60 * 1000)}`);
+        timeout = setTimeout(handleTimeout, Math.min(20 * numFiles * 1000, 2 * 60 * 60 * 1000)); // 20 seconds per file or 2 hours
       }
     });
     
@@ -62,8 +63,8 @@ async function executeCheckCommandReturnsLicenses (link) {
         if (timeout) {
           clearTimeout(timeout);
         }
-        console.log(`Timeout for ${link} set to ${20 * numFiles * 1000}`);
-        timeout = setTimeout(handleTimeout, 20 * numFiles * 1000); // 20 seconds per file
+        console.log(`Timeout for ${link} set to ${Math.min(20 * numFiles * 1000, 2 * 60 * 60 * 1000)}`);
+        timeout = setTimeout(handleTimeout, Math.min(20 * numFiles * 1000, 2 * 60 * 60 * 1000)); // 20 seconds per file or 2 hours
       }
     });
 
