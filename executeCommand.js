@@ -108,8 +108,15 @@ async function executeCheckCommandReturnsLicenses (link) {
             }
           }
 
+          if (matchedProjects.length === 0) 
+          {
+            report_result = "";
+          }
+          else
+          {
           const report_index = output.indexOf("------------------------------------------------------------------------------------------");
           report_result = report_index !== -1 ? output.slice(report_index + 1) : '';
+          }
       } 
       else 
       {
