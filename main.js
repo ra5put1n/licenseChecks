@@ -4,6 +4,7 @@ import { config } from "dotenv";
 config();
 
 const uri  = process.env.MONGODB_URI;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 import executeCheckCommandReturnsLicenses from './executeCommand.js';
 import {getRepos,getRepoLicense} from './getRepos.js';
