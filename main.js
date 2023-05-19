@@ -1,8 +1,10 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
+import { Octokit, App } from "octokit";
 import { config } from "dotenv";
 config();
 
 const uri  = process.env.MONGODB_URI;
+const octokit = new Octokit({ auth: GITHUB_TOKEN });
 import executeCheckCommandReturnsLicenses from './executeCommand.js';
 import {getRepos,getRepoLicense} from './getRepos.js';
 
@@ -58,23 +60,34 @@ async function addCompletedJob(link)
 	client.close();
 }
 
-async function writeToDb(job,result,jobs) 
+async function writeToDb(job,result,jobs,repoDetails) 
 {
     const client = await MongoClient.connect(uri);
     const db = client.db('jobs');
-    const collection = db.collection('results');
+    const collection = db.collection('newResults');
     // console.log(result);
     const license = await getRepoLicense(job);
     if (license == null)
     {
         license = "Unknown";
     }
-    await collection.insertOne({ link: result.link, licenseConflicts: Number(result.numberOfLicenseConflicts), CVEs: result.CVEs, matchedProjects: result.matchedProjects, license: license, report: result.report_result});
+    await collection.insertOne({ link: result.link, licenseConflicts: Number(result.numberOfLicenseConflicts), CVEs: result.CVEs, matchedProjects: result.matchedProjects, license: license,forked: repoDetails.forked, forks: repoDetails.forks, watchers: repoDetails.watchers, stars: repoDetails.stars, language: repoDetails.language});
     console.log(`Result written to DB for ${job}: ${result}\n`);
     jobs.splice(jobs.indexOf(job),1);
     // console.log(tempJobs);
     await writeCurrentJobs(jobs);
     client.close();
+}
+
+async function checkrepo(link)
+{
+    // get repo details from github using oktokit
+    const org_repo = link.split("/").slice(-2).join("/");
+    const response = await octokit.request(`GET /repos/${org_repo}`);
+    // console.log(link);
+    // console.log(response.data.archived,response.data.disabled,response.data.forked,response.data.forks,response.data.watchers,response.data.stargazers_count,response.data.language);
+
+    return {archived: response.data.archived,disabled: response.data.disabled,forked: response.data.forked,forks: response.data.forks,watchers: response.data.watchers,stars: response.data.stargazers_count,language: response.data.language};
 }
 
 async function processJobs() 
@@ -87,10 +100,16 @@ async function processJobs()
       try 
       {
         console.log(`Processing job ${job}.`)
+        const repoDetails = await checkrepo(job);
+        if (repoDetails.archived || repoDetails.disabled)
+        {
+            console.log(`Job ${job} is archived or disabled. Skipping.\n`);
+            continue;
+        }
         let result = await executeCheckCommandReturnsLicenses(job);
         console.log(`Number of conflicts for ${job}: ${result.numberOfLicenseConflicts}\n`);
         console.log(`Number of matches for ${job}: ${result.matchedProjects.length}\n`);
-        await writeToDb(job, result,currentJobs);
+        await writeToDb(job, result,currentJobs,repoDetails);
         await addCompletedJob(job);
       } 
       catch (error) 

@@ -88,17 +88,23 @@ async function executeCheckCommandReturnsLicenses (link) {
         if (numberOfLicenseConflicts === undefined) {
           numberOfLicenseConflicts = 0;
         }
-        const projectRegex = /(\w+\s*[-]*\w*)\s*(\d+)\s*\((http\S+)\)/gm;
+        const projectRegex = /(https?:\/\/[^\s]+)/g;
         let projectMatch;
-        while ((projectMatch = projectRegex.exec(output))) {
-          // console.log(projectMatch);
-          const name = projectMatch[1].trim();
-          const count = parseInt(projectMatch[2]);
-          const url = projectMatch[3];
-          matchedProjects.push({ name, count, url });
+        while ((projectMatch = projectRegex.exec(output))) 
+        {
+          const project = projectMatch[1];
+          // push into matchedProjects array only of it is not already present
+          if (!matchedProjects.includes(project)) 
+          {
+            // if project contains #, then push
+            if (project.includes("#"))
+            {
+              matchedProjects.push(project);
+            }
+          }
         }
 
-        const cveRegex = /CVE-\d{4}-\d{4,7}/g;
+          const cveRegex = /CVE-\d{4}-\d{4,7}/g;
           let cveMatch;
           while ((cveMatch = cveRegex.exec(output))) {
             const cve = cveMatch[0];
@@ -108,15 +114,6 @@ async function executeCheckCommandReturnsLicenses (link) {
             }
           }
 
-          if (matchedProjects.length === 0) 
-          {
-            report_result = "";
-          }
-          else
-          {
-          const report_index = output.indexOf("------------------------------------------------------------------------------------------");
-          report_result = report_index !== -1 ? output.slice(report_index + 1) : '';
-          }
       } 
       else 
       {
@@ -128,7 +125,7 @@ async function executeCheckCommandReturnsLicenses (link) {
         numberOfLicenseConflicts,
         matchedProjects,
         CVEs,
-        report_result
+        // report_result
       };
 
       resolve(result);
