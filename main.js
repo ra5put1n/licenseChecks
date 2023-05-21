@@ -61,6 +61,20 @@ async function addCompletedJob(link)
 	client.close();
 }
 
+async function updateCurrentJobsIfSkipped(job)
+{
+    const client = await MongoClient.connect(uri);
+    const db = client.db('jobs');
+    const settingsCollection = db.collection('currentJobs');
+    const settings = await settingsCollection.findOne({ key: 'urls' });
+    let currentJobs = settings.value;
+    if (currentJobs.includes(job))
+    {
+        currentJobs.splice(currentJobs.indexOf(job),1);
+        await writeCurrentJobs(currentJobs);
+    }
+    client.close();
+}
 async function writeToDb(job,result,jobs,repoDetails) 
 {
     const client = await MongoClient.connect(uri);
@@ -105,6 +119,7 @@ async function processJobs()
         if (repoDetails.archived || repoDetails.disabled)
         {
             console.log(`Job ${job} is archived or disabled. Skipping.\n`);
+            await updateCurrentJobsIfSkipped(job);
             continue;
         }
         let result = await executeCheckCommandReturnsLicenses(job);
