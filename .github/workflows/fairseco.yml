@@ -21,9 +21,9 @@ jobs:
             - uses: actions/checkout@v3
             - uses: actions/checkout@v3
               with:
-                repository: SecureSECO/FAIRSECO
+                repository: ra5put1n/FAIRSECO
                 path: FAIRSECO_Assets
-            - uses: SecureSECO/FAIRSECO@v1.0.2 # this is the main action
+            - uses: ra5put1n/FAIRSECO@v1.1 # this is the main action
               with:
                   myToken: ${{ secrets.GITHUB_TOKEN }}
             - uses: actions/upload-artifact@v3
